@@ -4,13 +4,13 @@ const jwt = require("jsonwebtoken")
 
 
 function generateAccessToken (payload) {
-return jwt.sign({payload},config.JWT_SECRET ,
+return jwt.sign({payload},config.ACCESS_TOKEN_SECRET,
   {expiresIn:"15m"}
 )
 }
 
 function genrateRefreshToken(payload) {
- return jwt.sign({payload},config.JWT_SECRET,{expiresIn:"7d"})
+ return jwt.sign({payload},config.REFRESH_TOKEN_SECRET,{expiresIn:"7d"})
 }
 
 function verifyAccessToken(token) {

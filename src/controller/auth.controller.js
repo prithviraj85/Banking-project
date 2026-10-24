@@ -1,7 +1,9 @@
 const userModel = require("../model/user.model")
 const bcrypt = require("bcrypt")
-const {generateAccessToken,genrateRefreshToken,verifyAccessToken,verifyRefreshToken}= require("../service/token.service")
-
+const {generateAccessToken,generateRefreshToken,verifyAccessToken,verifyRefreshToken}= require("../service/token.service")
+const {verifyMailer,sendEmail} = require("../service/email.service")
+const welcomeEmailTemplate = require("../template/welcomeEmail")
+const { config } = require("../config/index")
 
 //register
 
@@ -41,6 +43,14 @@ const accessToken = generateAccessToken({
 
 })
 
+// Send welcome email
+try {
+  console.log('Attempting to send welcome email to:', user.email);
+  await sendWelcomeEmail(user);
+} catch (error) {
+  console.error('welcome email failed:',error.message);
+}
+
 return res.status(201).json({
   message:"user registerd successfully",
   user:{
@@ -50,7 +60,6 @@ return res.status(201).json({
   },
   accessToken
 })
-
 
 }
 
@@ -94,7 +103,7 @@ if(!isValidPassword) {
 
 const accessToken = generateAccessToken({id:user._id,username:user.username})
 
-const refreshToken = genrateRefreshToken({
+const refreshToken = generateRefreshToken({
   id:user._id
 })
 
@@ -206,14 +215,14 @@ res.cookie('accessToken',newAccessToken,{
   httpOnly: true,
   maxAge: 15 * 60 * 1000,  //15m
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" 
+  sameSite: "lax"
 })
 
 res.cookie('refreshToken',newRefreshToken,{
   httpOnly:true,
   maxAge:7 * 24 * 60 * 60 * 1000, //7d
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" 
+  sameSite: "lax"
 })
 
 
@@ -229,9 +238,36 @@ return res.status(200).json({
 
 }
 
+async function sendWelcomeEmail(user) {
+  try {
+    console.log('📧 sendWelcomeEmail called for user:', user.email);
+    await verifyMailer();
+    console.log('✅ Mailer verified');
+    const html = welcomeEmailTemplate(user.username);
+    console.log('✅ HTML template generated');
+
+    // ============================================================
+    // EMAIL SENDING - TWO WAYS (BOTH USE SAME sendEmail FUNCTION)
+    // ============================================================
+
+    // Current Method (Correct parameter order):
+    // sendEmail(to, subject, text, html)
+    const result = await sendEmail(
+      user.email,  // TO: user email which did register
+      'Welcome to Raaz Bank',  // SUBJECT: email subject
+      `Hi ${user.username || "there"}, welcome to your Raaz Bank! Your account has been created successfully`,  // TEXT: plain text version
+      html  // HTML: HTML template
+    );
 
 
-
+    console.log("✅ welcome email sent successfully to:", user.email);
+    return result;
+  } catch (error) {
+    console.error('❌ Error sending welcome email:', error.message);
+    console.error('Full error:', error);
+    throw error;
+  }
+}
 
 async function logout (req,res) {
 console.log("reached on logout page");

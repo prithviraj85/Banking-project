@@ -26,7 +26,7 @@ email:{
 password:{
   type:String,
   required:[true,"password is required"],
-  minLength:[8,"password must be at least 8 charcter"],
+  minLength:[8,"password must be at least 8 character"],
   match:[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).+$/, "Password must contain at least 8 characters, one uppercase, one lowercase, one number, and one special character"],
   select:false
 },
